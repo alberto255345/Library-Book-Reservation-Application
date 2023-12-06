@@ -1,38 +1,39 @@
-version: "3"
+version: "3.7"
 services:
   app:
     build:
       args:
-        user: [current-user]
+        user: app
         uid: 1000
       context: ./
       dockerfile: Dockerfile
-    image: [image-name]
-    container_name: [container-name]
+    image: app-library
+    container_name: app-library
     restart: unless-stopped
     working_dir: /var/www/
     volumes:
       - ./:/var/www
     networks:
-      - [network-name]
+      - library-network
   db:
-    image: mysql:8.0
-    container_name: [db-container-name]
+    image: postgres:15.5-alpine3.18
+    container_name: db-library
     restart: unless-stopped
+    ports:
+      - 5432:5432
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
+      SERVICE_NAME: postgres
     volumes:
-      - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+      - ./docker-compose/postgres:/docker-entrypoint-initdb.d
     networks:
-      - [network-name]
+      - library-network
   nginx:
     image: nginx:alpine
-    container_name: [nginx-container-name]
+    container_name: nginx-library
     restart: unless-stopped
     ports:
       - 8000:80
@@ -40,7 +41,7 @@ services:
       - ./:/var/www
       - ./docker-compose/nginx:/etc/nginx/conf.d/
     networks:
-      - [network-name]
+      - library-network
 networks:
-  [network-name]:
+  library-network:
     driver: bridge
